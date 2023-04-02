@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: black;
+    }
+
+    canvas {
+      border: 1px solid white;
+    }
+  </style>
+</head>
+<body>
+
+  <audio id="hit-sound" src="soundEffects/hitSound.mp3" preload="auto"></audio>
+  <audio id="goal-sound" src="soundEffects/goalSound.mp3" preload="auto"></audio>
+	
+  <canvas id="pong" width="800" height="500"></canvas>
+  <script>
+    const canvas = document.getElementById('pong');
+    const ctx = canvas.getContext('2d');
+
+    const paddleWidth = 10;
+    const paddleHeight = 100;
+    const ballRadius = 5;
+    const maxScore = 10;
+
+    const user = {
+      x: 0,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      score: 0
+    };
+
+    const ai = {
+      x: canvas.width - paddleWidth,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      score: 0
+    };
+
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: ballRadius,
+      speed: 5,
+      velocityX: 5,
+      velocityY: 5
+    };
+
+    function drawRect(x, y, width, height, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
+    }
+
+    function drawCircle(x, y, radius, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawText(text, x, y, color) {
+      ctx.fillStyle = color;
+      ctx.font = '48px sans-serif';
+      ctx.fillText(text, x, y);
+    }
+
+    function playHitSound() {
+      const hitSound = document.getElementById('hit-sound');
+      hitSound.currentTime = 0;
+      hitSound.play();
+    }
+
+    function playGoalSound() {
+      const goalSound = document.getElementById('goal-sound');
+      goalSound.currentTime = 0;
+      goalSound.play();
+    }
+
+    function render() {
+      drawRect(0, 0, canvas.width, canvas.height, 'black');
+      drawRect(user.x, user.y, user.width, user.height, 'white');
+      drawRect(ai.x, ai.y, ai.width, ai.height, 'white');
+      drawCircle(ball.x, ball.y, ball.radius, 'white');
+      drawText(user.score, canvas.width / 4, 50, 'white');
+      drawText(ai.score, (3 * canvas.width) / 4, 50, 'white');
+    }
+
+    function collision(ball, paddle) {
+      return (
+        ball.y + ball.radius > paddle.y &&
+        ball.y - ball.radius < paddle.y + paddle.height &&
+                ball.x + ball.radius > paddle.x &&
+        ball.x - ball.radius < paddle.x + paddle.width
+      );
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.speed = 5;
+      ball.velocityX = -ball.velocityX;
+      ball.velocityY = -ball.velocityY;
+    }
+
+    function update() {
+      ball.x += ball.velocityX;
+      ball.y += ball.velocityY;
+
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+        ball.velocityY = -ball.velocityY;
+      }
+
+      if (ball.x - ball.radius < 0) {
+        ai.score++;
+        playGoalSound(); // Play goal sound
+        resetBall();
+      } else if (ball.x + ball.radius > canvas.width) {
+        user.score++;
+        playGoalSound(); // Play goal sound
+        resetBall();
+      }
+
+      if (collision(ball, user)) {
+        ball.velocityX = -ball.velocityX;
+        playHitSound(); // Play hit sound
+      } else if (collision(ball, ai)) {
+        ball.velocityX = -ball.velocityX;
+        playHitSound(); // Play hit sound
+      }
+
+      ai.y += (ball.y - (ai.y + ai.height / 2)) * 0.09;
+
+      if (user.score === maxScore || ai.score === maxScore) {
+        const winner = user.score === maxScore ? 'You win!' : 'You lose!';
+        alert(winner);
+        setTimeout(() => {
+          user.score = 0;
+          ai.score = 0;
+        }, 2000);
+        
+      }
+    }
+
+    function game() {
+      update();
+      render();
+    }
+
+    user.speed = 80;
+
+    function movePaddle(e) {
+      if (e.keyCode === 38) {
+        user.y -= user.speed;
+      } else if (e.keyCode === 40) {
+        user.y += user.speed;
+      }
+      user.y = Math.max(Math.min(user.y, canvas.height - user.height), 0);
+    }
+
+    document.addEventListener('keydown', movePaddle);
+    setInterval(game, 1000 / 60);
+  </script>
+</body>
+</html>
+
