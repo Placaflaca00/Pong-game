@@ -108,7 +108,7 @@
       return (
         ball.y + ball.radius > paddle.y &&
         ball.y - ball.radius < paddle.y + paddle.height &&
-                ball.x + ball.radius > paddle.x &&
+        ball.x + ball.radius > paddle.x &&
         ball.x - ball.radius < paddle.x + paddle.width
       );
     }
@@ -148,36 +148,31 @@
       }
 
       ai.y += (ball.y - (ai.y + ai.height / 2)) * 0.09;
-
-      if (user.score === maxScore || ai.score === maxScore) {
-        const winner = user.score === maxScore ? 'You win!' : 'You lose!';
-        alert(winner);
-        setTimeout(() => {
-          user.score = 0;
-          ai.score = 0;
-        }, 2000);
-        
-      }
     }
+
+    function movePaddle(e) {
+      const mouseY = e.clientY - canvas.offsetTop;
+      user.y = mouseY - user.height / 2;
+      user.y = Math.max(Math.min(user.y, canvas.height - user.height), 0);
+    }
+
+    function touchMovePaddle(e) {
+      e.preventDefault();
+      const touchY = e.touches[0].clientY - canvas.offsetTop;
+      user.y = touchY - user.height / 2;
+      user.y = Math.max(Math.min(user.y, canvas.height - user.height), 0);
+    }
+
+    canvas.addEventListener('mousemove', movePaddle);
+    canvas.addEventListener('touchmove', touchMovePaddle);
 
     function game() {
       update();
       render();
+      requestAnimationFrame(game);
     }
 
-    user.speed = 80;
-
-    function movePaddle(e) {
-      if (e.keyCode === 38) {
-        user.y -= user.speed;
-      } else if (e.keyCode === 40) {
-        user.y += user.speed;
-      }
-      user.y = Math.max(Math.min(user.y, canvas.height - user.height), 0);
-    }
-
-    document.addEventListener('keydown', movePaddle);
-    setInterval(game, 1000 / 60);
+    game();
   </script>
 </body>
 </html>
