@@ -37,7 +37,9 @@
     const paddleWidth = 10;
     const paddleHeight = 100;
     const ballRadius = 5;
-    const maxScore = 10;
+    const maxScore = 4; // Changed to 4 for best of 7
+    const aiReactionDelay = 10;
+    const initialBallSpeed = 3; // Reduced the initial ball speed
 
     const user = {
       x: 0,
@@ -59,10 +61,12 @@
       x: canvas.width / 2,
       y: canvas.height / 2,
       radius: ballRadius,
-      speed: 5,
-      velocityX: 5,
-      velocityY: 5
+      speed: initialBallSpeed,
+      velocityX: initialBallSpeed,
+      velocityY: initialBallSpeed
     };
+
+    let aiReactionCounter = 0;
 
     function drawRect(x, y, width, height, color) {
       ctx.fillStyle = color;
@@ -97,14 +101,15 @@
 
     function render() {
       drawRect(0, 0, canvas.width, canvas.height, 'black');
-      drawRect(user.x, user.y, user.width, user.height, 'white');
+      drawRect(user.x, user.y, user.width,
+            user.height, 'white');
       drawRect(ai.x, ai.y, ai.width, ai.height, 'white');
       drawCircle(ball.x, ball.y, ball.radius, 'white');
       drawText(user.score, canvas.width / 4, 50, 'white');
       drawText(ai.score, (3 * canvas.width) / 4, 50, 'white');
     }
 
-        function collision(ball, paddle) {
+    function collision(ball, paddle) {
       return (
         ball.y + ball.radius > paddle.y &&
         ball.y - ball.radius < paddle.y + paddle.height &&
@@ -116,9 +121,18 @@
     function resetBall() {
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
-      ball.speed = 5;
+      ball.speed = initialBallSpeed;
       ball.velocityX = -ball.velocityX;
       ball.velocityY = -ball.velocityY;
+    }
+
+    function checkVictory() {
+      if (user.score === maxScore || ai.score === maxScore) {
+        alert(user.score === maxScore ? "Player wins!" : "AI wins!");
+        user.score = 0;
+        ai.score = 0;
+        resetBall();
+      }
     }
 
     function update() {
@@ -131,23 +145,35 @@
 
       if (ball.x - ball.radius < 0) {
         ai.score++;
-        playGoalSound(); // Play goal sound
+        playGoalSound();
         resetBall();
+        checkVictory();
       } else if (ball.x + ball.radius > canvas.width) {
         user.score++;
-        playGoalSound(); // Play goal sound
+        playGoalSound();
         resetBall();
+        checkVictory();
       }
 
       if (collision(ball, user)) {
         ball.velocityX = -ball.velocityX;
-        playHitSound(); // Play hit sound
+        let deltaY = ball.y - (user.y + user.height / 2);
+        ball.velocityY += deltaY * 0.1;
+
+        playHitSound();
       } else if (collision(ball, ai)) {
         ball.velocityX = -ball.velocityX;
-        playHitSound(); // Play hit sound
+        let deltaY = ball.y - (ai.y + ai.height / 2);
+        ball.velocityY += deltaY * 0.1;
+
+        playHitSound();
       }
 
-      ai.y += (ball.y - (ai.y + ai.height / 2)) * 0.09;
+      aiReactionCounter++;
+      if (aiReactionCounter > aiReactionDelay) {
+        ai.y += (ball.y - (ai.y + ai.height / 2)) * 0.09;
+        aiReactionCounter = 0;
+      }
     }
 
     function movePaddle(e) {
@@ -163,8 +189,10 @@
       user.y = Math.max(Math.min(user.y, canvas.height - user.height), 0);
     }
 
-    canvas.addEventListener('mousemove', movePaddle);
-    canvas.addEventListener('touchmove', touchMovePaddle);
+    if (window.location.hostname !== 'github.io') {
+      canvas.addEventListener('mousemove', movePaddle);
+      canvas.addEventListener('touchmove', touchMovePaddle);
+    }
 
     function game() {
       update();
@@ -176,4 +204,4 @@
   </script>
 </body>
 </html>
-
+	
