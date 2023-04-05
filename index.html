@@ -104,7 +104,7 @@
       drawText(ai.score, (3 * canvas.width) / 4, 50, 'white');
     }
 
-    function collision(ball, paddle) {
+        function collision(ball, paddle) {
       return (
         ball.y + ball.radius > paddle.y &&
         ball.y - ball.radius < paddle.y + paddle.height &&
